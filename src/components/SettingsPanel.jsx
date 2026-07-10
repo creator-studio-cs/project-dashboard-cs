@@ -3,6 +3,7 @@ import { BRAND } from "../constants/business.config";
 import { inputStyle, btnPrimary, btnSecondary, label, card } from "../constants/styles";
 import { useSettings } from "../hooks/useSettings";
 import { useToast } from "./Toast";
+import LogoMark from "./LogoMark";
 
 const COLOR_PRESETS = [
   { name: "Neutral",  primary: "#2B2B2B", accent: "#8C8C8C" },
@@ -23,7 +24,7 @@ const TABS = [
 const clone = (o) => JSON.parse(JSON.stringify(o));
 
 export default function SettingsPanel({ onClose, onManageCustomFields }) {
-  const { settings, saveSettings, previewColors, resetColors, configured } = useSettings();
+  const { settings, saveSettings, previewColors, resetColors, previewLogo, resetLogo, configured } = useSettings();
   const { addToast } = useToast();
   const [tab, setTab] = useState("identity");
   const [draft, setDraft] = useState(() => clone(settings));
@@ -50,8 +51,28 @@ export default function SettingsPanel({ onClose, onManageCustomFields }) {
     setDraft(d => ({ ...d, [key]: arr }));
   }
 
+  function handleLogoFile(e) {
+    const file = e.target.files?.[0];
+    e.target.value = ""; // allow re-picking the same file
+    if (!file) return;
+    if (!/^image\//.test(file.type)) { addToast("Please choose an image file (PNG, SVG, or JPG).", "error"); return; }
+    if (file.size > 1024 * 1024) { addToast("Logo is too large — use an image under 1 MB (ideally under 200 KB).", "error"); return; }
+    const reader = new FileReader();
+    reader.onload = () => {
+      const dataUrl = String(reader.result);
+      setDraft(d => ({ ...d, logo: dataUrl }));
+      previewLogo(dataUrl); // live favicon preview
+    };
+    reader.readAsDataURL(file);
+  }
+  function removeLogo() {
+    setDraft(d => ({ ...d, logo: "" }));
+    previewLogo("");
+  }
+
   function cancel() {
     resetColors();   // undo any live color preview
+    resetLogo();     // undo any live favicon preview
     onClose();
   }
 
@@ -111,6 +132,26 @@ export default function SettingsPanel({ onClose, onManageCustomFields }) {
         <div style={{ padding: "20px 22px", overflowY: "auto", flex: 1 }}>
           {tab === "identity" && (
             <div style={{ display: "flex", flexDirection: "column", gap: 14 }}>
+              <div>
+                <label style={label}>Logo</label>
+                <div style={{ display: "flex", alignItems: "center", gap: 14 }}>
+                  <div style={{ width: 56, height: 56, borderRadius: 10, border: `1px solid ${BRAND.border}`, background: draft.logo ? BRAND.white : BRAND.navyMid, display: "flex", alignItems: "center", justifyContent: "center", overflow: "hidden", flexShrink: 0 }}>
+                    {draft.logo
+                      ? <img src={draft.logo} alt="Logo preview" style={{ maxWidth: "100%", maxHeight: "100%", objectFit: "contain" }} />
+                      : <LogoMark size={34} />}
+                  </div>
+                  <div style={{ display: "flex", flexDirection: "column", gap: 6 }}>
+                    <div style={{ display: "flex", gap: 8 }}>
+                      <label style={{ ...btnSecondary, cursor: "pointer", margin: 0, display: "inline-flex", alignItems: "center" }}>
+                        {draft.logo ? "Change logo" : "Upload logo"}
+                        <input type="file" accept="image/png,image/svg+xml,image/jpeg,image/webp,image/x-icon" onChange={handleLogoFile} style={{ display: "none" }} />
+                      </label>
+                      {draft.logo && <button style={btnSecondary} onClick={removeLogo}>Remove</button>}
+                    </div>
+                    <span style={{ fontSize: 12, color: BRAND.gray }}>Header logo + browser-tab icon. Square PNG or SVG under ~200 KB works best.</span>
+                  </div>
+                </div>
+              </div>
               <Field label="Business name" value={draft.identity.name} onChange={v => setIdentity("name", v)} placeholder="Your Business Name" />
               <Field label="Tagline" value={draft.identity.tagline} onChange={v => setIdentity("tagline", v)} placeholder="One-line description of what you do" />
               <Field label="From name (emails)" value={draft.identity.fromName} onChange={v => setIdentity("fromName", v)} placeholder="Your Name" />

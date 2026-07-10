@@ -1,6 +1,6 @@
 import { createContext, useContext, useEffect, useState, useCallback, useRef } from "react";
 import { supabase, isConfigured } from "../lib/supabase";
-import { applyRuntimeSettings, applyColorVars, getDefaultSettings } from "../constants/business.config";
+import { applyRuntimeSettings, applyColorVars, applyFavicon, getDefaultSettings } from "../constants/business.config";
 
 // Shared workspace settings: loaded from the `workspace_settings` table (single
 // row of JSON), applied to the running app, and synced live between users.
@@ -90,12 +90,14 @@ export function SettingsProvider({ children }) {
     }
   }, [apply]);
 
-  // Live color preview (used by the Settings UI while editing) without saving.
+  // Live previews (used by the Settings UI while editing) without saving.
   const previewColors = useCallback((colors) => applyColorVars(colors), []);
   const resetColors = useCallback(() => applyColorVars(settings.colors), [settings]);
+  const previewLogo = useCallback((logo) => applyFavicon(logo), []);
+  const resetLogo = useCallback(() => applyFavicon(settings.logo), [settings]);
 
   return (
-    <SettingsContext.Provider value={{ settings, saveSettings, previewColors, resetColors, loading, version, configured: isConfigured }}>
+    <SettingsContext.Provider value={{ settings, saveSettings, previewColors, resetColors, previewLogo, resetLogo, loading, version, configured: isConfigured }}>
       {children}
     </SettingsContext.Provider>
   );

@@ -9,7 +9,7 @@ import ConfirmDialog from "./components/ConfirmDialog";
 import { useToast } from "./components/Toast";
 import { BRAND, STAGES, EMAIL_TEMPLATES, DEFAULT_TEMPLATE, BUSINESS } from "./constants/business.config";
 import { isConfigured } from "./lib/supabase";
-import LogoMark from "./components/LogoMark";
+import BrandLogo from "./components/BrandLogo";
 import ContactList from "./components/ContactList";
 import PipelineView from "./components/PipelineView";
 import AnalyticsView from "./components/AnalyticsView";
@@ -278,9 +278,7 @@ export default function CRM({ settingsVersion }) {
       {/* Header */}
       <div className="crm-header" style={{background:BRAND.navy, padding:"0 20px", display:"flex", alignItems:"center", gap:16, height:52, flexShrink:0, zIndex:10}}>
         <div className="crm-header-left" style={{display:"flex", alignItems:"center", gap:10}}>
-          <div style={{width:32, height:32, borderRadius:8, background:BRAND.navyMid, display:"flex", alignItems:"center", justifyContent:"center", flexShrink:0}}>
-            <LogoMark size={22}/>
-          </div>
+          <BrandLogo size={22} boxSize={32} />
           <div className="crm-header-brand-text">
             <span style={{fontWeight:600, fontSize:14, color:BRAND.white, letterSpacing:"0.01em"}}>{BUSINESS.name}</span>
             <span style={{fontSize:11, color:BRAND.sand, marginLeft:5, letterSpacing:"0.05em", textTransform:"lowercase"}}>crm</span>

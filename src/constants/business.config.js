@@ -99,6 +99,22 @@ export function applyColorVars(colors) {
   Object.entries(vars).forEach(([k, v]) => root.style.setProperty(k, v));
 }
 
+// Swap the browser-tab favicon at runtime. `logo` is a data URL (uploaded logo)
+// or empty to fall back to the default favicon shipped in /public.
+export function applyFavicon(logo) {
+  if (typeof document === "undefined") return;
+  const pub = process.env.PUBLIC_URL || "";
+  const href = logo || `${pub}/favicon.svg`;
+  let link = document.querySelector('link[rel="icon"]');
+  if (!link) {
+    link = document.createElement("link");
+    link.rel = "icon";
+    document.head.appendChild(link);
+  }
+  link.setAttribute("href", href);
+  link.setAttribute("type", logo && !logo.startsWith("data:image/svg") ? "image/png" : "image/svg+xml");
+}
+
 // ---------------------------------------------------------------------------
 // DEFAULTS for identity + lists
 // ---------------------------------------------------------------------------
@@ -167,6 +183,9 @@ function slug(name) {
 // LIVE EXPORTS (reassigned by applyRuntimeSettings)
 // ---------------------------------------------------------------------------
 export let BUSINESS = { ...DEFAULT_IDENTITY };
+
+// Uploaded logo as a data URL ("" = use the default LogoMark + favicon).
+export let LOGO = "";
 
 export let STAGES = [...DEFAULT_STAGES];
 export let STAGE_COLORS = assignPairs(STAGES, STAGE_PREFERRED).fg;
@@ -246,6 +265,7 @@ export let DEFAULT_TEMPLATE = buildTemplates(BUSINESS).default;
 export function getDefaultSettings() {
   return {
     identity: { ...DEFAULT_IDENTITY },
+    logo: "",
     colors: { ...DEFAULT_COLORS },
     stages: [...DEFAULT_STAGES],
     segments: [...DEFAULT_SEGMENTS],
@@ -265,6 +285,9 @@ export function applyRuntimeSettings(s) {
 
   BUSINESS = { ...d.identity, ...(set.identity || {}) };
   if (typeof document !== "undefined" && BUSINESS.name) document.title = BUSINESS.name;
+
+  LOGO = set.logo || "";
+  applyFavicon(LOGO);
 
   STAGES = (set.stages && set.stages.length) ? set.stages : d.stages;
   const stagePairs = assignPairs(STAGES, STAGE_PREFERRED);

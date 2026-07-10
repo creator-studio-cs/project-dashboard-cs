@@ -2,7 +2,7 @@ import { useState } from "react";
 import { supabase } from "../lib/supabase";
 import { BRAND, SEGMENTS, LOCATIONS, HOW_MET_OPTIONS, DEFAULT_INTAKE_SEGMENT, BUSINESS } from "../constants/business.config";
 import { inputStyle, selectStyle, btnPrimary, label } from "../constants/styles";
-import LogoMark from "./LogoMark";
+import BrandLogo from "./BrandLogo";
 
 const EMPTY = {
   firstName: "", lastName: "", email: "", phone: "", org: "",
@@ -82,9 +82,7 @@ export default function IntakeForm() {
     <div style={{ minHeight: "100vh", background: BRAND.grayLight, display: "flex", flexDirection: "column", fontFamily: "system-ui, sans-serif" }}>
       {/* Header — matches CRM nav bar */}
       <div style={{ background: BRAND.navy, padding: "0 20px", display: "flex", alignItems: "center", gap: 10, height: 52, flexShrink: 0 }}>
-        <div style={{ width: 32, height: 32, borderRadius: 6, background: BRAND.navyMid, display: "flex", alignItems: "center", justifyContent: "center" }}>
-          <LogoMark size={22} />
-        </div>
+        <BrandLogo size={22} boxSize={32} />
         <div>
           <span style={{ fontWeight: 500, fontSize: 14, color: BRAND.white, letterSpacing: "0.01em" }}>{BUSINESS.name}</span>
           <span style={{ fontSize: 11, color: BRAND.sand, marginLeft: 5, letterSpacing: "0.05em" }}>new contact</span>
