@@ -33,7 +33,7 @@ const ROOT = path.join(__dirname, "..");
 const CONFIG_PATH = path.join(ROOT, "src/constants/business.config.js");
 const PUBLIC_DIR = path.join(ROOT, "public");
 
-const DEFAULTS = { name: "CRM Template", tagline: "Contact and pipeline management", navy: "#1B2A4A", sand: "#B5A48A", white: "#FFFFFF" };
+const DEFAULTS = { name: "Your Business Name", tagline: "One-line description of what you do", navy: "#2B2B2B", sand: "#8C8C8C", white: "#FFFFFF" };
 
 function extract(text, regex, fallback, fieldName) {
   const match = text.match(regex);
@@ -51,14 +51,17 @@ function main() {
   }
   const configText = fs.readFileSync(CONFIG_PATH, "utf8");
 
-  const businessBlock = (configText.match(/export const BUSINESS = \{([\s\S]*?)\n\};/) || [])[1] || "";
-  const brandBlock = (configText.match(/export const BRAND = \{([\s\S]*?)\n\};/) || [])[1] || "";
+  // Branding is runtime-editable now (see business.config.js), so these static
+  // assets are generated from the DEFAULT identity/colors — the baseline shown
+  // before a user saves custom settings in the app's Settings panel.
+  const identityBlock = (configText.match(/const DEFAULT_IDENTITY = \{([\s\S]*?)\};/) || [])[1] || "";
+  const colorsBlock = (configText.match(/export const DEFAULT_COLORS = \{([\s\S]*?)\};/) || [])[1] || "";
 
-  const name    = extract(businessBlock, /name:\s*"([^"]+)"/, DEFAULTS.name, "BUSINESS.name");
-  const tagline = extract(businessBlock, /tagline:\s*"([^"]*)"/, DEFAULTS.tagline, "BUSINESS.tagline");
-  const navy    = extract(brandBlock, /navy:\s*"(#[0-9a-fA-F]{3,8})"/, DEFAULTS.navy, "BRAND.navy");
-  const sand    = extract(brandBlock, /sand:\s*"(#[0-9a-fA-F]{3,8})"/, DEFAULTS.sand, "BRAND.sand");
-  const white   = extract(brandBlock, /white:\s*"(#[0-9a-fA-F]{3,8})"/, DEFAULTS.white, "BRAND.white");
+  const name    = extract(identityBlock, /name:\s*"([^"]+)"/, DEFAULTS.name, "DEFAULT_IDENTITY.name");
+  const tagline = extract(identityBlock, /tagline:\s*"([^"]*)"/, DEFAULTS.tagline, "DEFAULT_IDENTITY.tagline");
+  const navy    = extract(colorsBlock, /primary:\s*"(#[0-9a-fA-F]{3,8})"/, DEFAULTS.navy, "DEFAULT_COLORS.primary");
+  const sand    = extract(colorsBlock, /accent:\s*"(#[0-9a-fA-F]{3,8})"/, DEFAULTS.sand, "DEFAULT_COLORS.accent");
+  const white   = DEFAULTS.white;
 
   // 1. favicon.svg — same generic "contact rows" mark as LogoMark.jsx,
   // driven by the same colors (rounded charcoal tile, light nodes + lines).

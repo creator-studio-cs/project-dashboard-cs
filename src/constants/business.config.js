@@ -264,6 +264,7 @@ export function applyRuntimeSettings(s) {
   const set = s || d;
 
   BUSINESS = { ...d.identity, ...(set.identity || {}) };
+  if (typeof document !== "undefined" && BUSINESS.name) document.title = BUSINESS.name;
 
   STAGES = (set.stages && set.stages.length) ? set.stages : d.stages;
   const stagePairs = assignPairs(STAGES, STAGE_PREFERRED);
