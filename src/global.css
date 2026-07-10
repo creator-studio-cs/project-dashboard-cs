@@ -1,0 +1,256 @@
+/* ================================================================
+   CRM Template — Global Styles
+   Clean, modern design system with responsive breakpoints
+   ================================================================ */
+
+/* --- Brand color variables (defaults; overridden at runtime by Settings) --- */
+:root {
+  --brand-navy: #2B2B2B;
+  --brand-navy-mid: #4A4A4A;
+  --brand-navy-light: #ECECEC;
+  --brand-sand: #8C8C8C;
+  --brand-sand-light: #F2F2F2;
+  --brand-sand-mid: #D6D6D6;
+  --brand-black: #111111;
+  --brand-gray: #6B6B6B;
+  --brand-gray-light: #F4F4F4;
+  --brand-border: #E3E3E3;
+  --brand-white: #FFFFFF;
+  --brand-green: #5E7A5A;
+  --brand-green-light: #EDF1EB;
+  --brand-red: #8F5049;
+  --brand-red-light: #F4EAE9;
+  --brand-amber: #8A7239;
+  --brand-amber-light: #F3EEE1;
+}
+
+/* --- Reset & base --- */
+*, *::before, *::after { box-sizing: border-box; }
+body {
+  margin: 0;
+  font-family: 'Inter', system-ui, -apple-system, sans-serif;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  font-size: 14px;
+  line-height: 1.5;
+}
+
+/* --- Typography --- */
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
+
+/* --- Focus --- */
+:focus-visible {
+  outline: 2px solid var(--brand-navy);
+  outline-offset: 2px;
+  border-radius: 4px;
+}
+
+/* --- Scrollbar --- */
+::-webkit-scrollbar { width: 6px; height: 6px; }
+::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar-thumb { background: var(--brand-sand-mid); border-radius: 99px; }
+::-webkit-scrollbar-thumb:hover { background: var(--brand-sand); }
+
+/* --- Transitions --- */
+.crm-card {
+  transition: border-color 0.15s ease, box-shadow 0.2s ease, transform 0.15s ease;
+  cursor: pointer;
+}
+.crm-card:hover {
+  box-shadow: 0 4px 16px rgba(43,43,43,0.08);
+  transform: translateY(-1px);
+}
+.crm-card.active {
+  box-shadow: 0 4px 16px rgba(43,43,43,0.12);
+}
+.crm-nav-btn {
+  transition: background 0.15s ease, color 0.15s ease, opacity 0.15s ease;
+}
+.crm-nav-btn:hover { background: rgba(255,255,255,0.1) !important; }
+.crm-icon-btn {
+  transition: background 0.15s ease, border-color 0.15s ease, color 0.15s ease;
+}
+
+/* --- Toast notifications --- */
+.crm-toast-container {
+  position: fixed;
+  bottom: 24px;
+  right: 24px;
+  z-index: 9999;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  max-width: 400px;
+}
+.crm-toast {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 12px 16px;
+  border-radius: 10px;
+  font-size: 13px;
+  font-weight: 500;
+  box-shadow: 0 4px 24px rgba(0,0,0,0.12);
+  animation: crm-toast-in 0.3s cubic-bezier(0.4,0,0.2,1);
+  backdrop-filter: blur(8px);
+}
+.crm-toast-icon { font-size: 14px; flex-shrink: 0; }
+.crm-toast-msg { flex: 1; }
+.crm-toast-undo {
+  background: none; border: none; cursor: pointer;
+  font-weight: 600; font-size: 12px; text-decoration: underline;
+  color: inherit; padding: 2px 6px;
+}
+.crm-toast-close {
+  background: none; border: none; cursor: pointer;
+  color: inherit; opacity: 0.5; font-size: 12px; padding: 2px;
+}
+.crm-toast-close:hover { opacity: 1; }
+@keyframes crm-toast-in {
+  from { transform: translateX(100%); opacity: 0; }
+  to   { transform: translateX(0);    opacity: 1; }
+}
+
+/* --- Drag and drop --- */
+.crm-pipeline-col { transition: background 0.15s ease; min-height: 100px; }
+.crm-pipeline-col.drag-over { background: rgba(43,43,43,0.06) !important; }
+.crm-pipeline-card.dragging { opacity: 0.5; transform: rotate(2deg); }
+.crm-pipeline-card {
+  transition: box-shadow 0.15s ease, transform 0.15s ease;
+  cursor: grab;
+}
+.crm-pipeline-card:active { cursor: grabbing; }
+
+/* Pipeline stage dropdown: hidden by default (mouse users drag cards);
+   shown only on touch devices where native drag-and-drop doesn't work. */
+.crm-pipeline-move { display: none; }
+@media (pointer: coarse) {
+  .crm-pipeline-move { display: block; }
+  .crm-pipeline-card { cursor: default; }
+}
+
+/* --- Larger touch targets on touch devices --- */
+@media (pointer: coarse) {
+  input[type="checkbox"] { width: 20px !important; height: 20px !important; }
+  .crm-icon-btn { min-height: 38px; min-width: 38px; }
+}
+
+/* --- Keyboard shortcut hints --- */
+.crm-kbd {
+  display: inline-flex; align-items: center; justify-content: center;
+  min-width: 20px; height: 20px; padding: 0 5px;
+  background: rgba(255,255,255,0.15);
+  border-radius: 4px; font-size: 10px; font-weight: 600;
+  font-family: 'Inter', monospace;
+  line-height: 1; color: inherit; opacity: 0.6;
+  margin-left: 6px;
+}
+
+/* --- Confirm dialog overlay --- */
+.crm-confirm-overlay {
+  position: fixed; inset: 0; z-index: 10000;
+  background: rgba(20,20,20,0.5);
+  display: flex; align-items: center; justify-content: center;
+  animation: crm-fade-in 0.15s ease;
+}
+.crm-confirm-box {
+  background: #fff; border-radius: 14px; padding: 28px 32px;
+  max-width: 380px; width: 90%;
+  box-shadow: 0 20px 60px rgba(0,0,0,0.2);
+  animation: crm-scale-in 0.2s cubic-bezier(0.4,0,0.2,1);
+}
+@keyframes crm-fade-in { from { opacity: 0; } to { opacity: 1; } }
+@keyframes crm-scale-in { from { transform: scale(0.95); opacity: 0; } to { transform: scale(1); opacity: 1; } }
+
+/* --- Empty states --- */
+.crm-empty {
+  text-align: center; padding: 60px 20px; color: #6B6B6B;
+}
+.crm-empty-icon { font-size: 36px; margin-bottom: 12px; opacity: 0.7; }
+.crm-empty-title { font-size: 15px; font-weight: 600; margin-bottom: 6px; color: #111; }
+.crm-empty-desc { font-size: 13px; max-width: 280px; margin: 0 auto; }
+
+/* ================================================================
+   RESPONSIVE BREAKPOINTS
+   ================================================================ */
+
+/* Tablet (< 1024px) */
+@media (max-width: 1024px) {
+  .crm-header { padding: 0 12px !important; gap: 8px !important; }
+  .crm-header-brand-text { display: none !important; }
+  .crm-header-stats { display: none !important; }
+  .crm-nav-btn { padding: 6px 10px !important; font-size: 12px !important; }
+  .crm-kbd { display: none !important; }
+  .crm-main { padding: 12px !important; }
+  .crm-detail-panel { width: 380px !important; }
+}
+
+/* Mobile (< 768px) */
+@media (max-width: 768px) {
+  .crm-header {
+    flex-wrap: wrap !important;
+    height: auto !important;
+    padding: 10px 12px !important;
+    gap: 6px !important;
+  }
+  .crm-header-left { width: 100%; display: flex; justify-content: space-between; align-items: center; }
+  .crm-nav {
+    width: 100% !important;
+    overflow-x: auto !important;
+    margin-left: 0 !important;
+    gap: 2px !important;
+    padding-bottom: 2px;
+    -webkit-overflow-scrolling: touch;
+  }
+  .crm-nav-btn { white-space: nowrap; font-size: 12px !important; padding: 5px 8px !important; }
+  .crm-main { padding: 8px !important; }
+
+  /* Detail panel goes full-screen on mobile */
+  .crm-detail-panel {
+    width: 100% !important;
+    max-width: 100% !important;
+    border-radius: 0 !important;
+    border-left: none !important;
+    top: 0 !important;
+  }
+  .crm-detail-inner { padding: 16px !important; }
+
+  /* Modals fill screen on mobile */
+  .crm-modal-backdrop { padding: 0 !important; align-items: stretch !important; }
+  .crm-modal {
+    width: 100% !important;
+    max-width: 100% !important;
+    border-radius: 0 !important;
+    max-height: 100vh !important;
+    overflow-y: auto !important;
+  }
+
+  /* Pipeline scrolls horizontally */
+  .crm-pipeline-wrap { overflow-x: auto; -webkit-overflow-scrolling: touch; }
+  .crm-pipeline-col { min-width: 260px; }
+
+  /* Toast bottom-center on mobile */
+  .crm-toast-container {
+    bottom: 12px; right: 12px; left: 12px;
+    max-width: none;
+  }
+
+  /* Contact list compact */
+  .crm-contact-row { padding: 10px 12px !important; }
+  .crm-contact-meta { display: none !important; }
+}
+
+/* Small phone (< 480px) */
+@media (max-width: 480px) {
+  .crm-nav-btn { font-size: 11px !important; padding: 4px 6px !important; }
+  .crm-badge { font-size: 9px !important; padding: 1px 4px !important; }
+}
+
+/* --- Reduced motion --- */
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
+}
