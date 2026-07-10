@@ -1,6 +1,6 @@
 {
-  "short_name": "CRM Template",
-  "name": "CRM Template",
+  "short_name": "Your Busines",
+  "name": "Your Business Name",
   "icons": [
     {
       "src": "favicon.ico",
@@ -20,6 +20,6 @@
   ],
   "start_url": ".",
   "display": "standalone",
-  "theme_color": "#1B2A4A",
+  "theme_color": "#2B2B2B",
   "background_color": "#ffffff"
 }
