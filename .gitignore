@@ -22,3 +22,9 @@
 npm-debug.log*
 yarn-debug.log*
 yarn-error.log*
+
+# --- Operator playbook: kept LOCAL only, never published to this public repo ---
+/SETUP_AND_GUIDE.md
+/USER_GUIDE.md
+/NEW_INSTANCE_CHECKLIST.md
+/README.local.md
