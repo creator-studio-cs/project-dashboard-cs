@@ -1,10 +1,10 @@
-import { useState, useMemo } from "react";
+import { useState, useMemo, useEffect } from "react";
 import { BRAND } from "../constants/business.config";
 import { inputStyle, btnPrimary, btnSecondary, label, card } from "../constants/styles";
 import { useSettings } from "../hooks/useSettings";
 import { useToast } from "./Toast";
 import LogoMark from "./LogoMark";
-import { createAccess, isProtected, rememberUnlock, clearUnlock } from "../utils/access";
+import { getSession, signOut } from "../lib/auth";
 
 const COLOR_PRESETS = [
   { name: "Neutral",  primary: "#2B2B2B", accent: "#8C8C8C" },
@@ -19,7 +19,7 @@ const TABS = [
   { key: "identity",   label: "Identity" },
   { key: "appearance", label: "Appearance" },
   { key: "categories", label: "Categories" },
-  { key: "security",   label: "Security" },
+  { key: "account",    label: "Account" },
 ];
 
 // deep-ish clone that's fine for our plain settings shape
@@ -83,10 +83,6 @@ export default function SettingsPanel({ onClose, onManageCustomFields }) {
     const res = await saveSettings(draft);
     setSaving(false);
     if (res.ok) {
-      // Keep the current device unlocked so setting/changing a password never
-      // locks you out of the session you set it from.
-      if (isProtected(draft.access)) rememberUnlock(draft.access);
-      else clearUnlock();
       addToast(res.local ? "Settings applied (not synced — connect a database to share)" : "Settings saved", "success");
       onClose();
     } else {
@@ -213,8 +209,8 @@ export default function SettingsPanel({ onClose, onManageCustomFields }) {
             </div>
           )}
 
-          {tab === "security" && (
-            <SecuritySection draft={draft} setDraft={setDraft} addToast={addToast} />
+          {tab === "account" && (
+            <AccountSection />
           )}
         </div>
 
@@ -278,93 +274,52 @@ function ListEditor({ title, hint, items, onChange, placeholder = "Add an option
   );
 }
 
-// Set / change / remove a workspace password. Writes the derived hash into the
-// settings draft; the panel's main "Save changes" button persists it.
-function SecuritySection({ draft, setDraft, addToast }) {
-  const [pw1, setPw1] = useState("");
-  const [pw2, setPw2] = useState("");
-  const [working, setWorking] = useState(false);
-  const [ready, setReady] = useState(false); // a new/changed password is staged in the draft
-  const protectedNow = isProtected(draft.access);
+// Shows who's signed in and lets them sign out. Accounts themselves are
+// managed in Supabase (Authentication → Users) — inviting teammates, resetting
+// passwords, and removing access all happen there, not in the app.
+function AccountSection() {
+  const [email, setEmail] = useState(null); // null = loading
+  const [busy, setBusy] = useState(false);
 
-  const MIN = 4;
-  const mismatch = pw2.length > 0 && pw1 !== pw2;
-  const canSet = pw1.length >= MIN && pw1 === pw2 && !working;
+  useEffect(() => {
+    let active = true;
+    getSession().then(s => { if (active) setEmail(s?.user?.email || ""); });
+    return () => { active = false; };
+  }, []);
 
-  async function setPassword() {
-    if (!canSet) return;
-    setWorking(true);
-    try {
-      const access = await createAccess(pw1);
-      setDraft(d => ({ ...d, access }));
-      setPw1(""); setPw2(""); setReady(true);
-    } catch {
-      addToast("Couldn't set the password on this browser. Try a modern browser over https.", "error");
-    } finally {
-      setWorking(false);
-    }
-  }
-
-  function removePassword() {
-    setDraft(d => ({ ...d, access: null }));
-    setPw1(""); setPw2(""); setReady(false);
+  async function handleSignOut() {
+    setBusy(true);
+    await signOut(); // AuthGate's onAuthChange swaps back to the login screen
   }
 
   return (
     <div style={{ display: "flex", flexDirection: "column", gap: 16 }}>
       {/* Status */}
-      <div style={{ display: "flex", alignItems: "center", gap: 10, padding: "12px 14px", borderRadius: 10, background: protectedNow ? BRAND.greenLight : BRAND.grayLight, border: `1px solid ${BRAND.border}` }}>
-        <span style={{ fontSize: 18 }}>{protectedNow ? "🔒" : "🔓"}</span>
+      <div style={{ display: "flex", alignItems: "center", gap: 10, padding: "12px 14px", borderRadius: 10, background: BRAND.greenLight, border: `1px solid ${BRAND.border}` }}>
+        <span style={{ fontSize: 18 }}>🔒</span>
         <div style={{ fontSize: 13, color: BRAND.black }}>
-          <div style={{ fontWeight: 600 }}>{protectedNow ? "Password protection is on" : "No password set"}</div>
+          <div style={{ fontWeight: 600 }}>Signed in</div>
           <div style={{ fontSize: 12, color: BRAND.gray, marginTop: 1 }}>
-            {protectedNow
-              ? "Visitors must enter the password before they can see this workspace."
-              : "Anyone with the link can open this workspace."}
+            {email === null ? "…" : email || "Authenticated session"}
           </div>
         </div>
       </div>
 
-      {ready && (
-        <div style={{ fontSize: 12, color: BRAND.green, background: BRAND.greenLight, border: `1px solid color-mix(in srgb, ${BRAND.green} 30%, transparent)`, borderRadius: 8, padding: "9px 12px" }}>
-          Password ready — click <strong>Save changes</strong> below to apply it across the workspace.
-        </div>
-      )}
-
       <div>
-        <label style={label}>{protectedNow ? "Change password" : "Set a password"}</label>
-        <input
-          type="password"
-          style={{ ...inputStyle, marginBottom: 8 }}
-          value={pw1}
-          onChange={e => { setPw1(e.target.value); setReady(false); }}
-          placeholder={`New password (at least ${MIN} characters)`}
-        />
-        <input
-          type="password"
-          style={inputStyle}
-          value={pw2}
-          onChange={e => { setPw2(e.target.value); setReady(false); }}
-          placeholder="Confirm password"
-        />
-        {mismatch && <div style={{ fontSize: 12, color: BRAND.red, marginTop: 6 }}>Passwords don't match.</div>}
-        <div style={{ display: "flex", gap: 8, marginTop: 10 }}>
-          <button style={{ ...btnPrimary, opacity: canSet ? 1 : 0.6 }} onClick={setPassword} disabled={!canSet}>
-            {working ? "Setting…" : protectedNow ? "Update password" : "Set password"}
-          </button>
-          {protectedNow && (
-            <button style={{ ...btnSecondary, color: BRAND.red, borderColor: `color-mix(in srgb, ${BRAND.red} 27%, transparent)` }} onClick={removePassword}>
-              Remove password
-            </button>
-          )}
-        </div>
+        <button
+          style={{ ...btnSecondary, color: BRAND.red, borderColor: `color-mix(in srgb, ${BRAND.red} 27%, transparent)`, opacity: busy ? 0.6 : 1 }}
+          onClick={handleSignOut}
+          disabled={busy}
+        >
+          {busy ? "Signing out…" : "Sign out"}
+        </button>
       </div>
 
       <div style={{ fontSize: 12, color: BRAND.gray, background: BRAND.grayLight, borderRadius: 8, padding: "10px 12px", lineHeight: 1.6 }}>
-        <strong>Good to know:</strong> this is a simple lock to keep casual visitors out — not full security.
-        Because the app runs entirely in the browser, someone technical could still reach the data directly.
-        There's no password recovery: if it's forgotten, set a new one here (you'll need access to a device
-        that's still unlocked, or your database). The public intake form link keeps working without the password.
+        <strong>Managing accounts:</strong> your workspace is protected by real sign-in — the database returns
+        nothing without a valid account, so the data can't be reached by sharing a link. To add a teammate,
+        reset a password, or remove someone, use your Supabase dashboard → <strong>Authentication → Users</strong>.
+        The public intake form link keeps working without an account.
       </div>
     </div>
   );
