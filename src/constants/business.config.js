@@ -219,6 +219,17 @@ export const QUOTE_STATUS_BG = {
   "Quote Accepted": BRAND.greenLight, "Quote Declined": BRAND.redLight,
 };
 
+// --- Project statuses (fixed) — used by the Projects tab + Gantt timeline ---
+export const PROJECT_STATUSES = ["Planning", "In Progress", "On Hold", "Completed", "Cancelled"];
+export const PROJECT_STATUS_COLORS = {
+  "Planning": BRAND.gray, "In Progress": BRAND.navy, "On Hold": BRAND.amber,
+  "Completed": BRAND.green, "Cancelled": BRAND.red,
+};
+export const PROJECT_STATUS_BG = {
+  "Planning": BRAND.grayLight, "In Progress": BRAND.navyLight, "On Hold": BRAND.amberLight,
+  "Completed": BRAND.greenLight, "Cancelled": BRAND.redLight,
+};
+
 // --- Pricing calculator (fixed for now) ---
 export const PRICING_PACKAGES = [];
 export const VOLUME_THRESHOLD = 10;

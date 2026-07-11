@@ -1,6 +1,7 @@
 import { useState, useMemo, useRef, useEffect } from "react";
 import { useContacts } from "./hooks/useContacts";
 import { useTasks } from "./hooks/useTasks";
+import { useProjects } from "./hooks/useProjects";
 import { useFieldDefs } from "./hooks/useFieldDefs";
 import { logActivity } from "./hooks/useActivity";
 import TaskList, { taskBadgeCount } from "./components/TaskList";
@@ -12,6 +13,8 @@ import { isConfigured } from "./lib/supabase";
 import BrandLogo from "./components/BrandLogo";
 import ContactList from "./components/ContactList";
 import PipelineView from "./components/PipelineView";
+import ProjectsView from "./components/ProjectsView";
+import ProjectModal from "./components/ProjectModal";
 import AnalyticsView from "./components/AnalyticsView";
 import DetailPanel from "./components/DetailPanel";
 import EmailModal from "./components/EmailModal";
@@ -51,6 +54,8 @@ export default function CRM({ settingsVersion }) {
   const [emailSubView, setEmailSubView] = useState("campaigns");
   const [showFieldDefs, setShowFieldDefs] = useState(false);
   const [showSettings, setShowSettings] = useState(false);
+  const [showProject, setShowProject] = useState(false);
+  const [editingProject, setEditingProject] = useState(null); // project being edited, or null for new
 
   const [hash, setHash] = useState(window.location.hash);
   useEffect(() => {
@@ -65,6 +70,7 @@ export default function CRM({ settingsVersion }) {
       // Escape — close modals/panels in priority order
       if (e.key === "Escape") {
         if (showSettings) { setShowSettings(false); return; }
+        if (showProject) { setShowProject(false); setEditingProject(null); return; }
         if (showEmail) { setShowEmail(false); return; }
         if (showBulkEmail) { setShowBulkEmail(false); return; }
         if (showFieldDefs) { setShowFieldDefs(false); return; }
@@ -82,12 +88,13 @@ export default function CRM({ settingsVersion }) {
     }
     window.addEventListener("keydown", handleKey);
     return () => window.removeEventListener("keydown", handleKey);
-  }, [showEmail, showBulkEmail, showFieldDefs, showSettings, showAdd, showImport, selected]);
+  }, [showEmail, showBulkEmail, showFieldDefs, showSettings, showProject, showAdd, showImport, selected]);
 
   const pendingCount  = useMemo(() => contacts.filter(c => c.pending).length, [contacts]);
   const followUpCount = useMemo(() => getFollowUpQueue(contacts.filter(c => !c.pending)).length, [contacts]);
   const { tasks, addTask, toggleTask, deleteTask } = useTasks();
   const dueTaskCount = useMemo(() => taskBadgeCount(tasks), [tasks]);
+  const { projects, addProject, updateProject, deleteProject } = useProjects();
   const { fieldDefs, addFieldDef, updateFieldDef, deleteFieldDef } = useFieldDefs();
   const [confirmDelete, setConfirmDelete] = useState(null); // { id, name }
   const { addToast } = useToast();
@@ -141,6 +148,35 @@ export default function CRM({ settingsVersion }) {
     setSelected(null);
     setConfirmDelete(null);
     addToast(`${name} deleted`, "info");
+  }
+
+  function openAddProject() {
+    setEditingProject(null);
+    setShowProject(true);
+  }
+
+  function openEditProject(project) {
+    setEditingProject(project);
+    setShowProject(true);
+  }
+
+  async function saveProject(data) {
+    if (editingProject) {
+      await updateProject(editingProject.id, data);
+      addToast("Project updated", "success");
+    } else {
+      const created = await addProject(data);
+      if (created) addToast(`${data.name} added`, "success");
+    }
+    setShowProject(false);
+    setEditingProject(null);
+  }
+
+  async function removeProject(project) {
+    await deleteProject(project.id);
+    setShowProject(false);
+    setEditingProject(null);
+    addToast(`${project.name} deleted`, "info");
   }
 
   function toggleCheck(id) {
@@ -285,7 +321,7 @@ export default function CRM({ settingsVersion }) {
           </div>
         </div>
         <nav className="crm-nav" style={{display:"flex", gap:2, marginLeft:12}}>
-          {["contacts","pipeline","analytics"].map(v => (
+          {["contacts","projects","pipeline","analytics"].map(v => (
             <button key={v} className="crm-nav-btn" style={{padding:"6px 14px", borderRadius:6, border:"none", background:view===v?"rgba(255,255,255,0.12)":"transparent", color:view===v?BRAND.white:BRAND.sand, cursor:"pointer", fontSize:13, fontWeight:view===v?500:400, letterSpacing:"0.01em"}} onClick={() => setView(v)}>
               {v.charAt(0).toUpperCase() + v.slice(1)}
             </button>
@@ -396,6 +432,15 @@ export default function CRM({ settingsVersion }) {
             pipelineByStage={pipelineByStage}
             onSelectContact={setSelected}
             updateContact={updateContact}
+          />
+        )}
+        {view === "projects" && (
+          <ProjectsView
+            projects={projects}
+            contacts={contacts}
+            onAddProject={openAddProject}
+            onEditProject={openEditProject}
+            onSelectContact={setSelected}
           />
         )}
         {view === "analytics" && (
@@ -509,6 +554,15 @@ export default function CRM({ settingsVersion }) {
             onManageCustomFields={() => { setShowSettings(false); setShowFieldDefs(true); }}
           />
         )}
+        {showProject && (
+          <ProjectModal
+            project={editingProject}
+            contacts={contacts}
+            onSave={saveProject}
+            onDelete={removeProject}
+            onClose={() => { setShowProject(false); setEditingProject(null); }}
+          />
+        )}
         {showAdd && (
           <AddModal
             onSave={addContact}
@@ -561,6 +615,8 @@ export default function CRM({ settingsVersion }) {
               generateEmail={generateEmail}
               deleteContact={requestDeleteContact}
               fieldDefs={fieldDefs}
+              projects={projects.filter(p => p.contactId === panelContact.id)}
+              onOpenProject={openEditProject}
             />
           )}
         </div>

@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { BRAND, STAGES, TIER_COLORS, TIER_BG, STAGE_COLORS, STAGE_BG, DEAL_TYPES, QUOTE_STATUSES, QUOTE_STATUS_COLORS, QUOTE_STATUS_BG, JOURNEY_TYPES, JOURNEY_TYPE_COLORS, JOURNEY_TYPE_BG, JOURNEY_TYPE_DESC, LOCATIONS } from "../constants/business.config";
+import { BRAND, STAGES, TIER_COLORS, TIER_BG, STAGE_COLORS, STAGE_BG, DEAL_TYPES, QUOTE_STATUSES, QUOTE_STATUS_COLORS, QUOTE_STATUS_BG, JOURNEY_TYPES, JOURNEY_TYPE_COLORS, JOURNEY_TYPE_BG, JOURNEY_TYPE_DESC, LOCATIONS, PROJECT_STATUS_COLORS, PROJECT_STATUS_BG } from "../constants/business.config";
 import { inputStyle, selectStyle, btnPrimary, btnSecondary, pill, tag, label } from "../constants/styles";
 import { initials, avatarColor, fmt$ } from "../utils/helpers";
 import PricingCalculator from "./PricingCalculator";
@@ -10,7 +10,14 @@ import CustomFieldsSection from "./CustomFieldsSection";
 import { useTasks } from "../hooks/useTasks";
 import { logActivity } from "../hooks/useActivity";
 
-export default function DetailPanel({ c, onClose, updateContact, generateEmail, deleteContact, fieldDefs = [] }) {
+const PROJECT_MONTHS = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
+function fmtProjectDate(s) {
+  if (!s) return "—";
+  const d = new Date(s + "T00:00:00");
+  return `${PROJECT_MONTHS[d.getMonth()]} ${d.getDate()}`;
+}
+
+export default function DetailPanel({ c, onClose, updateContact, generateEmail, deleteContact, fieldDefs = [], projects = [], onOpenProject }) {
   const [showCalc, setShowCalc] = useState(false);
   const [scopeNotes, setScopeNotes] = useState(c.scopeNotes || "");
   const [editing, setEditing] = useState(false);
@@ -202,6 +209,33 @@ export default function DetailPanel({ c, onClose, updateContact, generateEmail, 
         <div style={label}>Tasks</div>
         <TaskList tasks={tasks} addTask={addTask} toggleTask={toggleTask} deleteTask={deleteTask} contactId={c.id} />
       </div>
+
+      {/* Projects for this client */}
+      {projects.length > 0 && (
+        <div style={{marginBottom:12}}>
+          <div style={label}>Projects</div>
+          <div style={{display:"flex", flexDirection:"column", gap:6}}>
+            {projects.map(p => {
+              const range = p.startDate && p.endDate
+                ? `${fmtProjectDate(p.startDate)} → ${fmtProjectDate(p.endDate)}`
+                : "No dates";
+              return (
+                <div
+                  key={p.id}
+                  onClick={() => onOpenProject && onOpenProject(p)}
+                  style={{display:"flex", alignItems:"center", justifyContent:"space-between", gap:8, padding:"8px 10px", borderRadius:8, border:`1px solid ${BRAND.border}`, cursor: onOpenProject ? "pointer" : "default"}}
+                >
+                  <div style={{minWidth:0}}>
+                    <div style={{fontSize:13, fontWeight:600, color:BRAND.navy, overflow:"hidden", textOverflow:"ellipsis", whiteSpace:"nowrap"}}>{p.name}</div>
+                    <div style={{fontSize:11, color:BRAND.gray}}>{range}</div>
+                  </div>
+                  <span style={pill(PROJECT_STATUS_COLORS[p.status], PROJECT_STATUS_BG[p.status])}>{p.status}</span>
+                </div>
+              );
+            })}
+          </div>
+        </div>
+      )}
 
       {/* Files */}
       <div style={{marginBottom:12}}>
